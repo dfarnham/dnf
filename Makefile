@@ -11,7 +11,9 @@ dnf: dnf.y dnf.l const.h tree.h
 
 test: dnf
 	mkTests.sh
+	@echo "MD5 of original expressions"
 	expr-test.pl | md5
+	@echo "MD5 of expressions in DNF"
 	dnf-test.pl | md5
 
 clean:

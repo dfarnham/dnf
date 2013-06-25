@@ -8,7 +8,7 @@
 # dnf-test.pl  -- dnf transformed expressions
 
 code='#!/usr/bin/env perl
-
+use strict;
 #
 # This evaluates the expressions for all combinations
 # of True/False (0/1) for 5 variables (a,b,c,d,e).
