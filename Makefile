@@ -1,5 +1,5 @@
 CC     = gcc
-CFLAGS = -O2 -Wall
+CFLAGS = -O2 -Wall -Wno-unneeded-internal-declaration
 LEXER  = flex 
 PARSER = bison -y -d
 RM     = /bin/rm -f
