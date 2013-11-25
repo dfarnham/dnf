@@ -344,7 +344,7 @@ and_distribute(struct node *snode) {
 
         // if left child is an OR (possibly from above swap)
         // convert: (y OR z) AND x -> (y AND x) OR (z AND x)
-        if ((LCHILD(snode)->type == OR_TYPE)) {
+        if (LCHILD(snode)->type == OR_TYPE) {
             distribute_branches(snode);
             and_distribute(snode);
             return 1;
