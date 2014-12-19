@@ -7,7 +7,6 @@
  * Based on the white paper:
  *   "KeyNote Policy Files and Conversion to Disjunctive Normal Form for Use in IPsec"
  */
-#include "const.h"
 #include "y.tab.h"
 %}
 

@@ -4,7 +4,7 @@ LEXER  = flex
 PARSER = bison -y -d
 RM     = rm -f
 
-dnf: dnf.y dnf.l const.h tree.h
+dnf: dnf.y dnf.l tree.h
 	$(LEXER) dnf.l
 	$(PARSER) dnf.y
 	$(CC) $(CFLAGS) y.tab.c lex.yy.c -o $@

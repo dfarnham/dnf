@@ -12,7 +12,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include "tree.h"
-#include "const.h"
 
 /*
  * External functions
