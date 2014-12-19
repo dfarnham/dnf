@@ -12,12 +12,16 @@
 #include <stdlib.h>
 #include <string.h>
 #include "tree.h"
-
-#define INITIALIZE   /* Define this only here */
 #include "const.h"
 
+/*
+ * External functions
+ */
 extern int      yylex                   (void);
 
+/*
+ * Local functions
+ */
 void            yyerror                 (char *);
 void            ncopy                   (struct node *, struct node *);
 void            free_node               (struct node *);
@@ -40,14 +44,16 @@ int             main                    (int, char *[]);
 
 %}
 %union {
-    struct node * np;
+    struct node * nptr;
+    char *        sval;
 };
-%type <np> expr
+%type <nptr> expr
 
 /*
  * Tokens provided by the scanner
  */
-%token OR AND EQ NE LT LE GT GE NOT IDENT
+%token OR AND EQ NE LT LE GT GE NOT
+%token <sval> IDENT
 
 /*
  * Associativity and precedence (low to high)
@@ -65,23 +71,23 @@ int             main                    (int, char *[]);
 
 %%
 input:
-        | input '\n'        { printf("> ");                         }
+        | input '\n'        { printf("> ");                       }
         | input expr '\n'   { extract_DNF_tree($2);
                               print_tree($2);
                               free_tree($2);
-                              printf("\n> ");                       }
+                              printf("\n> ");                     }
         ;
-expr:     IDENT             { $$ = add_leaf(IDENT_TYPE, Ident.buf); }
-        | expr AND expr     { $$ = add_node(AND_TYPE, $1, $3);      }
-        | expr OR expr      { $$ = add_node(OR_TYPE, $1, $3);       }
-        | expr LT expr      { $$ = add_node(LT_TYPE, $1, $3);       }
-        | expr LE expr      { $$ = add_node(LE_TYPE, $1, $3);       }
-        | expr GT expr      { $$ = add_node(GT_TYPE, $1, $3);       }
-        | expr GE expr      { $$ = add_node(GE_TYPE, $1, $3);       }
-        | expr EQ expr      { $$ = add_node(EQ_TYPE, $1, $3);       }
-        | expr NE expr      { $$ = add_node(NE_TYPE, $1, $3);       }
-        | NOT expr          { $$ = add_node(NOT_TYPE, $2, NNULL);   }
-        | '(' expr ')'      { $$ = $2;                              }
+expr:     IDENT             { $$ = add_leaf(IDENT_TYPE, $1);      }
+        | expr AND expr     { $$ = add_node(AND_TYPE, $1, $3);    }
+        | expr OR expr      { $$ = add_node(OR_TYPE,  $1, $3);    }
+        | expr LT expr      { $$ = add_node(LT_TYPE,  $1, $3);    }
+        | expr LE expr      { $$ = add_node(LE_TYPE,  $1, $3);    }
+        | expr GT expr      { $$ = add_node(GT_TYPE,  $1, $3);    }
+        | expr GE expr      { $$ = add_node(GE_TYPE,  $1, $3);    }
+        | expr EQ expr      { $$ = add_node(EQ_TYPE,  $1, $3);    }
+        | expr NE expr      { $$ = add_node(NE_TYPE,  $1, $3);    }
+        | NOT expr          { $$ = add_node(NOT_TYPE, $2, NNULL); }
+        | '(' expr ')'      { $$ = $2;                            }
         ;
 %%
 /* ----end of grammar----*/
@@ -111,7 +117,7 @@ ncopy(struct node *from, struct node *to) {
         free(to->value);  // reclaim resources
     }
     to->value = (from->value) ? strdup(from->value) : (char *)NULL;
-    to->left = from->left;
+    to->left  = from->left;
     to->right = from->right;
 }
 
@@ -152,8 +158,8 @@ nalloc(void) {
     if (!(np = (struct node *) malloc(sizeof(struct node)))) {
         yyerror("nalloc: Out of Memory\n");
     }
-    np->type = NULL_TYPE;
-    np->value = (char *)NULL;
+    np->type   = NULL_TYPE;
+    np->value  = (char *)NULL;
     LCHILD(np) = RCHILD(np) = NNULL;
     return np;
 }
@@ -165,8 +171,8 @@ nalloc(void) {
 struct node *
 add_leaf(int type, char *value) {
     struct node *np = nalloc();
-    np->type = type;
-    np->value = strdup(value);
+    np->type   = type;
+    np->value  = value;
     LCHILD(np) = RCHILD(np) = NNULL;
     return np;
 }
@@ -182,7 +188,7 @@ add_leaf(int type, char *value) {
 struct node *
 add_node(int type, struct node *left, struct node *right) {
     struct node *np = nalloc();
-    np->type = type;
+    np->type   = type;
     LCHILD(np) = left;
     RCHILD(np) = right;
     return np;
@@ -257,13 +263,13 @@ apply_double_negation(struct node *snode) {
 void
 apply_DeMorgan(struct node *snode, int type) {
     struct node *child, *grand_child1, *grand_child2, *new_child;
-    child = LCHILD(snode);
-    grand_child1 = LCHILD(child);
-    grand_child2 = RCHILD(child);
-    snode->type = (type == AND_TYPE) ? OR_TYPE : AND_TYPE;
-    child->type = NOT_TYPE;
+    child         = LCHILD(snode);
+    grand_child1  = LCHILD(child);
+    grand_child2  = RCHILD(child);
+    snode->type   = (type == AND_TYPE) ? OR_TYPE : AND_TYPE;
+    child->type   = NOT_TYPE;
     RCHILD(child) = NNULL;
-    new_child = add_node(NOT_TYPE, grand_child2, NNULL);
+    new_child     = add_node(NOT_TYPE, grand_child2, NNULL);
     RCHILD(snode) = new_child;
 }
 
@@ -380,13 +386,13 @@ and_distribute(struct node *snode) {
 void
 distribute_branches(struct node *snode) {
     struct node *rchild, *cp_rchild, *gchild1, *gchild2;
-    rchild = RCHILD(snode);
-    cp_rchild = copy_tree(rchild);
-    gchild1 = LCHILD(LCHILD(snode));
-    gchild2 = RCHILD(LCHILD(snode));
-    snode->type = OR_TYPE;
-    LCHILD(snode)->type = AND_TYPE;
-    RCHILD(snode) = add_node(AND_TYPE, gchild2, rchild);
+    rchild                = RCHILD(snode);
+    cp_rchild             = copy_tree(rchild);
+    gchild1               = LCHILD(LCHILD(snode));
+    gchild2               = RCHILD(LCHILD(snode));
+    snode->type           = OR_TYPE;
+    LCHILD(snode)->type   = AND_TYPE;
+    RCHILD(snode)         = add_node(AND_TYPE, gchild2, rchild);
     RCHILD(LCHILD(snode)) = cp_rchild;
 }
 
@@ -493,6 +499,5 @@ main(int argc, char *argv[]) {
     printf ("dnf: Quit with ^D\n");
     printf ("> ");
     yyparse();
-    free(Ident.buf);
     exit(0);
 }
