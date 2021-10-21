@@ -16,6 +16,3 @@ dnf: Quit with ^D<br/>
 
 &gt; !(a || b) && (c || d)<br/>
 ((c && ((!a) && (!b))) || (d && ((!a) && (!b))))<br/>
-
-
-Dave Farnham, dave.farnham@gmail.com
