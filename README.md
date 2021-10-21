@@ -1,4 +1,3 @@
-<a name="dnf"/>
 ## dnf
  
 Lex/Yacc command line "Disjunctive Normal Form" tool
